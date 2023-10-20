@@ -6,8 +6,6 @@
 #include <vector>
 #include <filesystem>
 
-#include "levenshtein.h"
-
 class DirectoryComparator {
  public:
   DirectoryComparator(uint8_t similarity_threshold, std::string directory1, std::string directory2)
@@ -57,7 +55,6 @@ class DirectoryComparator {
         hash = ((hash * kPbase) % mod + static_cast<uint8_t>(buffer[i])) % mod;
       }
     }
-
     return hash;
   }
 
@@ -70,6 +67,9 @@ class DirectoryComparator {
   }
 
   void FindIdenticalFiles() {
+    populateHashTable(directory1_, hashTable1_);
+    populateHashTable(directory2_, hashTable2_);
+
     for (const auto& file1 : hashTable1_) {
       size_t hash = file1.first;
       for (std::string file_name : file1.second) {
@@ -88,7 +88,7 @@ class DirectoryComparator {
     for (const auto& entry : std::filesystem::directory_iterator(directory1_)) {
       std::string file_name = entry.path();
       for (std::string equal_file_name : equal_files[file_name]) {
-        std::cout << "File " << file_name << " and File " << equal_file_name << " are similar\n";
+        std::cout << "File " << file_name << " and File " << equal_file_name << " are identical\n";
       }
     }
   }
@@ -145,8 +145,7 @@ class DirectoryComparator {
     uint64_t lev_dist = CalculateLevenshteinDistance(content1, content2);
 
     double similarity = 1 - static_cast<double>(lev_dist) / maxLength;
-    std::cout << file1 << " " << file2 << " " << similarity << "\n";
-    if (similarity >= similarity_threshold_) {
+    if (similarity >= similarity_threshold_ && similarity != 1) {
       similar_files[file1].push_back(file2);
       similar_files[file2].push_back(file1);
 
@@ -184,17 +183,17 @@ class DirectoryComparator {
   }
 
   void FindUniqueFiles() {
-    for (const auto& file1 : std::filesystem::directory_iterator(directory1_)) {
-      std::string file1_name = file1.path().filename();
-      if (equal_files.count(file1_name) == 0 && similar_files.count(file1_name) == 0) {
-        std::cout << "File " << file1_name << " is unique\n";
+    for (const auto& entry : std::filesystem::directory_iterator(directory1_)) {
+      std::string file_name = entry.path();
+      if (equal_files[file_name].size() == 0 && similar_files[file_name].size() == 0) {
+        std::cout << "File " << file_name << " is unique\n";
       }
     }
 
-    for (const auto& file2 : std::filesystem::directory_iterator(directory2_)) {
-      std::string file2_name = file2.path().filename();
-      if (equal_files.count(file2_name) == 0 && similar_files.count(file2_name) == 0) {
-        std::cout << "File " << file2_name << " is unique\n";
+    for (const auto& entry : std::filesystem::directory_iterator(directory2_)) {
+      std::string file_name = entry.path();
+      if (equal_files[file_name].size() == 0 && similar_files[file_name].size() == 0) {
+        std::cout << "File " << file_name << " is unique\n";
       }
     }
   }
