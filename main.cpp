@@ -200,11 +200,17 @@ class DirectoryComparator {
 };
 
 int main() {
-  std::string directory1 = "test/dir1";
-  std::string directory2 = "test/dir2";
-  uint8_t threshold = 70;
+  if (argc != 4) {
+    std::cerr << "Usage: " << argv[0] << " <directory1> <directory2> <threshold>" << std::endl;
+    return 1;
+  }
+
+  std::string directory1 = argv[1];
+  std::string directory2 = argv[2];
+  uint8_t threshold = std::stoi(argv[3]);
 
   DirectoryComparator comp(threshold, directory1, directory2);
-
   comp.CompareDirectories();
+
+  return 0;
 }
